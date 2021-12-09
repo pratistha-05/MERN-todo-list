@@ -2,7 +2,7 @@
 const express = require('express');
 const app = express();
 const path = require('path');
-const Todo=require('./models/todoSchema')
+//const Todo=require('./models/todoSchema')
 //-------------------------------------------------------------
 const mongoose = require('mongoose');
 
@@ -14,6 +14,34 @@ mongoose.connect('mongodb://localhost:27017/todoDB',{useNewUrlParser: true})//--
         console.log("MongoDB database connection error!!")
         console.log(err)
     });
+
+    const todoSchema=new mongoose.Schema({     //SCHEMA
+        name:{
+            type:String,
+            required:[true,"please add name of todo"]},//validation
+        date:{
+             type: Date,
+             default: Date.now },
+        priority:{
+            type:Number,
+            min:0,//limits
+            max:5}
+    });    
+    
+    const Todo=mongoose.model('Todo',todoSchema);  //MODEL
+    
+
+     const todo1=new Todo({
+         name:"dancing",
+         date:2-11-21,
+         priority:5
+     })
+     const todo2=new Todo({
+         name:"assignments",
+         date:3-11-21,
+         priority:4
+     })
+    
 //------------------------------------------------------------
 
 
@@ -57,6 +85,7 @@ app.get("/",function(req,res){
     day=day+" , "+today;
     */
    Todo.find({},function(err,foundTodo){
+      // console.log(foundTodo);
     res.render('list',{title:"Today",newtodo:foundTodo});
 
    });
@@ -74,21 +103,23 @@ app.get("/work",function(req,res){
 })
 
 app.post("/",function(request,res){
-    var item=request.body.todo;
-    if(request.body.list === "Work")
-    {
-
-        work.push(item);
-    }
-    else{
-
-        //items.push(item);
-        res.redirect("/");
-    }
-    
-    res.redirect("/work")
+    var itemName=request.body.todo;
+    const item = new Todo({//adding new TODO to database on users input
+        name:itemName
+    })
+    item.save();
+    res.redirect("/")
 })
 
+app.post("/delete",function(req,res){
+    console.log(req.body.delete);
+   const deleteId=req.body.delete;
+   Todo.findByIdAndRemove(deleteId,function(err){
+       if(!err)
+       console.log("deleted the checked item")
+   })
+    res.redirect("/")
+})
 
 app.listen(3000,function(){
  console.log("server started!");
